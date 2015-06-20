@@ -36,10 +36,6 @@ public class Category {
             mNumBigCategory = bigCategoryList.size();
             mNumProduct = productList.size();
 
-            System.out.println("smallCategorys = " + mNumSmallCategory);
-            System.out.println("bigCategorys = " + mNumBigCategory);
-            System.out.println("products = " + mNumProduct);
-
             JSONObject jObj;
             
             //small category
@@ -48,8 +44,6 @@ public class Category {
                 jObj = iteratorSmall.next();
                 String cateId = (String) jObj.get("cateId");
                 String cateName = (String) jObj.get("cateName");
-                System.out.println(cateId + ", " + cateName);
-//                SmallCategory abc = new SmallCategory(1, "2");
                 mSmallCategoryList.add(new SmallCategory(cateId, cateName));
             }
             
@@ -61,11 +55,10 @@ public class Category {
                 String cateName = (String)jObj.get("cateName");
                 
                 JSONArray subCategoryList = (JSONArray)jObj.get("subCategorys");
-                int[] subCate = new int[subCategoryList.size()];
+                String[] subCate = new String[subCategoryList.size()];
                 for (int i = 0; i < subCategoryList.size(); i++) {
-                    subCate[i] = Integer.valueOf((String)subCategoryList.get(i));
+                    subCate[i] = (String)subCategoryList.get(i);
                 }
-                System.out.println(cateId + ", " + subCategoryList.toString());
                 mBigCategoryList.add(new BigCategory(cateId, cateName, subCate));
             }
 
@@ -88,24 +81,42 @@ public class Category {
                 String prodId = (String) jObj.get("prodId");
                 String smallCategoryId = (String) jObj.get("smallCategoryId");
                 String saleCnt = (String) jObj.get("saleCnt");
-////////////////////////////////////////////
                 
-                mTopListMapSmall.get(smallCategoryId)
-                                .push(new Product(Integer.valueOf(price), 
-                                                    prodId, 
-                                                    smallCategoryId, 
-                                                    Integer.valueOf(saleCnt)));
+                Product product = new Product(Integer.valueOf(price), 
+                                                prodId, 
+                                                smallCategoryId, 
+                                                Integer.valueOf(saleCnt));
                 
-///////////////////////////////////////////////////
-//                mProductList.add(new Product(Integer.valueOf(price), 
-//                                                prodId, 
-//                                                smallCategoryId, 
-//                                                Integer.valueOf(saleCnt)));
+                mTopListMapSmall.get(smallCategoryId).push(product);
+                
+                for (int i = 0; i < mBigCategoryList.size(); i++) {
+                    String[] subCate = mBigCategoryList.get(i).mSubCategories;
+                    for (int j = 0; j < subCate.length; j++) {
+                        if (smallCategoryId.equals(subCate[j])) {
+                            mTopListMapBig.get(mBigCategoryList.get(i).mCateId).push(product);
+                        }
+                    }
+                }
             }
 
             for (int i = 0; i < mSmallCategoryList.size(); i++) {
-                System.out.println("----- " + mSmallCategoryList.get(i).mCateName + " -----");
-                mTopListMapSmall.get(mSmallCategoryList.get(i).mCateId).showList();
+                StringBuffer out = new StringBuffer();
+                out.append(mSmallCategoryList.get(i).mCateId);
+                out.append("::");
+                out.append(mSmallCategoryList.get(i).mCateName);
+                out.append("::");
+                out.append( mTopListMapSmall.get(mSmallCategoryList.get(i).mCateId).getProductId());
+                System.out.println(out.toString());
+            }
+            
+            for (int i = 0; i < mBigCategoryList.size(); i++) {
+                StringBuffer out = new StringBuffer();
+                out.append(mBigCategoryList.get(i).mCateId);
+                out.append("::");
+                out.append(mBigCategoryList.get(i).mCateName);
+                out.append("::");
+                out.append( mTopListMapBig.get(mBigCategoryList.get(i).mCateId).getProductId());
+                System.out.println(out.toString());
             }
 
             
@@ -186,6 +197,25 @@ public class Category {
                 System.out.println(mTopProduct.get(i).toString());
             }
         }
+        
+        public String getProductId() {
+            StringBuffer ret = new StringBuffer();
+            for(int i = 0; i < mTopProduct.size(); i++) {
+                ret.append(mTopProduct.get(i).getProductId());
+                ret.append(" ");
+            }
+            return ret.toString();
+        }
+        
+//        @Override
+//        public String toString() {
+//            StringBuffer ret = new StringBuffer();
+//            for(int i = 0; i < mTopProduct.size(); i++) {
+//                ret.append(mTopProduct.get(i).toString());
+//                ret.append(" ");
+//            }
+//            return ret.toString();
+//        }
     }
     
     static class SmallCategory {
@@ -201,9 +231,9 @@ public class Category {
     static class BigCategory {
         public String mCateId;
         public String mCateName;
-        public int[] mSubCategories;
+        public String[] mSubCategories;
         
-        public BigCategory(String cateId, String cateName, int[] subCate) {
+        public BigCategory(String cateId, String cateName, String[] subCate) {
             mCateId = cateId;
             mCateName = cateName;
             mSubCategories = subCate;
@@ -223,9 +253,13 @@ public class Category {
             mSaleCnt = saleCnt;
         }
         
-        @Override
-        public String toString() {
-            return "price = " + mPrice + ", productId = " + mProductId + ", smallCateid = " + mSmallCategoryId + ", saleCnt = " + mSaleCnt;
+        public String getProductId() {
+            return mProductId;
         }
+        
+//        @Override
+//        public String toString() {
+//            return "price = " + mPrice + ", productId = " + mProductId + ", smallCateid = " + mSmallCategoryId + ", saleCnt = " + mSaleCnt;
+//        }
     }
 }
